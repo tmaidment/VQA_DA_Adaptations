@@ -81,10 +81,7 @@ if __name__ == "__main__":
     model = torchvision.models.resnet50(pretrained=True)
     model.to(device)
     model.eval()
-
-    #softmax = nn.Softmax(dim=1)
-    #softmax = softmax.to(device)
-
+    
     image_features = {}
     print('Extracting image features...')
     t = tqdm(iter(dataloader), total=len(dataloader))
