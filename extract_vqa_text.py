@@ -13,7 +13,6 @@ from tqdm import tqdm
 import random
 import re
 
-
 np.random.seed(0)
 random.seed(0)
 
