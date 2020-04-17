@@ -11,6 +11,7 @@ import os
 from PIL import Image
 from tqdm import tqdm
 import random
+from helper_functions import feature_vectors, Q_interesting_words
 
 torch.manual_seed(0)
 torch.backends.cudnn.deterministic = True
@@ -20,6 +21,11 @@ random.seed(0)
 
 def get_image_id(path):
     return path.split('_')[-1][:-4]
+
+def normalize(vec):
+    vec -= vec.min()
+    vec /= vec.max()
+    return vec
 
 class QuestionImages(Dataset):
     def __init__(self, image_paths, transform=None):
@@ -57,6 +63,11 @@ if __name__ == "__main__":
     with open(os.path.join(args.dataset, 'img_ids.txt')) as f:
         img_ids = f.readlines()
 
+    if 'train' in args.dataset:
+        task = 'train2014'
+    else:
+        task = 'val2014'
+
     coco_images = glob.glob('{}/*.jpg'.format(os.path.join(args.coco_folder,task)))
     
     transform = transforms.Compose([
@@ -65,7 +76,7 @@ if __name__ == "__main__":
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ])
 
-    dataset = QuestionImages(coco_images[:10], transform)
+    dataset = QuestionImages(coco_images, transform)
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=8, shuffle=False, num_workers=4)
 
     model = torchvision.models.resnet50(pretrained=True)
@@ -74,7 +85,7 @@ if __name__ == "__main__":
     
     image_features = {}
     print('Extracting image features...')
-    t = tqdm(iter(dataloader), total=len(dataloader))
+    t = tqdm(iter(dataloader), leave=False, total=len(dataloader))
     for image_ids, images in t:
         images = images.to(device)
         outputs = model(images)
@@ -82,14 +93,52 @@ if __name__ == "__main__":
             image_features[image_id] = outputs[idx].detach().cpu().numpy()
 
     print('Saving processed files...')
-    for (question, answer, image_id) in tqdm(zip(questions, answers, img_ids)):
-        candidate_answers = random.sample(answers, 4)
-        if answer in candidate_answers:
-            candidate_answers.remove(answer)
-        else:
-            candidate_answers = candidate_answers[:-1]
-        
-        #stack everything here
+    for idx, (question, answer, image_id) in tqdm(enumerate(zip(questions, answers, img_ids)), total=len(questions)):
+        image_id = image_id.strip().zfill(12)
+        if image_id in image_features:
+            try:
+                candidate_answers = random.sample(answers, 4)
+                if answer in candidate_answers:
+                    candidate_answers.remove(answer)
+                else:
+                    candidate_answers = candidate_answers[:-1]
+                candidate_answers.append(answer)
+                random.shuffle(candidate_answers)
+                answer_idx = candidate_answers.index(answer)
+                
+                q_words = Q_interesting_words.extract_four_words_from_question(question.strip())
+                q_vecs = []
+                a_vecs = []
+                for q_word in q_words:
+                    if q_word != ' ':
+                        q_vecs.append(feature_vectors.question_vector(q_word.strip()))
+                    else:
+                        q_vecs.append(list(np.zeros(100)))
+                for a_word in candidate_answers:
+                    a_vecs.append(feature_vectors.answer_vector(a_word.strip()))
+
+                q_vec = np.asarray(q_vecs)
+                a_vec = np.asarray(a_vecs)
+                i_vec = image_features[image_id].reshape(10, 100)
+
+                combined = np.vstack((q_vec, a_vec, i_vec)) * 255
+                img = combined.astype(np.uint8)
+
+                im = Image.fromarray(combined)
+                im = im.convert("L")
+
+                path = os.path.join(args.output_folder,task,str(answer_idx))
+                if not os.path.exists(path):
+                    os.makedirs(path)
+                with open(os.path.join(path,'{}.png'.format(idx)), 'wb') as f:
+                    im.save(f)
+            except:
+                pass
+            
+            
+            #stack everything here
+
+            #print('stop')
 
         
 

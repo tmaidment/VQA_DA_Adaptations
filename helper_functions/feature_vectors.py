@@ -1,7 +1,7 @@
 
 from gensim.models import Word2Vec
 
-model = Word2Vec.load("W:\Github_rep\VQA_DA_Adaptations\models\w2v_mscocovqa.model")
+model = Word2Vec.load("./models/w2v_mscocovqa_2.model")
 
 def question_vector(question_str):
     return model.wv[question_str]

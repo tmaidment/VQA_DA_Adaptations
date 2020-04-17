@@ -19,6 +19,9 @@ random.seed(0)
 def clean_string(string):
     return re.sub('\W+',' ', string).lower()
 
+def get_dataset_split(string):
+    return string.split('_')[-2]
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Extract questions from VQA')
     parser.add_argument('--q_json', type=str, help='path to json file for questions')
@@ -45,7 +48,8 @@ if __name__ == "__main__":
         mc_ans[ans['question_id']] = ans['multiple_choice_answer']
 
     print('Saving processed files...')
-    path = args.output_folder
+    data_split = get_dataset_split(args.q_json)
+    path = os.path.join(args.output_folder,data_split)
     if not os.path.exists(path):
         os.makedirs(path)
     with open(os.path.join(path,'questions.txt'.format(task)), 'a') as q_f:    
