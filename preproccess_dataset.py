@@ -17,7 +17,7 @@ torch.manual_seed(0)
 torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 np.random.seed(0)
-random.seed(0)
+#random.seed(0)
 
 def get_image_id(path):
     return path.split('_')[-1][:-4]
@@ -69,6 +69,7 @@ if __name__ == "__main__":
         task = 'val2014'
 
     coco_images = glob.glob('{}/*.jpg'.format(os.path.join(args.coco_folder,task)))
+    #coco_images = coco_images[:10]
     
     transform = transforms.Compose([
         transforms.Resize((224, 224)),
@@ -91,7 +92,6 @@ if __name__ == "__main__":
         outputs = model(images)
         for idx, image_id in enumerate(image_ids):
             image_features[image_id] = outputs[idx].detach().cpu().numpy()
-
     print('Saving processed files...')
     for idx, (question, answer, image_id) in tqdm(enumerate(zip(questions, answers, img_ids)), total=len(questions)):
         image_id = image_id.strip().zfill(12)
