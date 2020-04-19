@@ -73,7 +73,7 @@ class TransferClassifier(nn.Module):
                 nn.Dropout()
                 )
 
-        self.classifier = nn.Linear(512, 10)
+        self.classifier = nn.Linear(512, 4)
         self.__in_features = 512
 
     def forward(self, x):
@@ -273,6 +273,6 @@ if __name__ == "__main__":
     # Decay LR by a factor of 0.1 every 7 epochs
     exp_lr_scheduler = lr_scheduler.StepLR(optimizer_conv, step_size=25, gamma=0.1)
 
-    model_conv, epoch = train_model(model_conv, criterion, optimizer_conv, exp_lr_scheduler, dataloaders, num_epochs=25)
+    model_conv, epoch = train_model(model_conv, criterion, optimizer_conv, exp_lr_scheduler, dataloaders, num_epochs=50)
 
     torch.save(model_conv.state_dict(), '{}.pth'.format(run_string))
