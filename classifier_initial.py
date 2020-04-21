@@ -192,7 +192,7 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, num_epochs=
             #             best_auc = epoch_auc
             #             best_model_wts = copy.deepcopy(model.state_dict())
             #             best_epoch = epoch
-            if phase == 'test':
+            if phase == 'val':
                 if epoch_acc > best_acc:
                     best_acc = epoch_acc
                     best_model_wts = copy.deepcopy(model.state_dict())
